@@ -1,0 +1,21 @@
+---
+#обновление ca сертификата и генерация нового ключа для puppet агента на клиенте (для версии puppet 2.7 )
+  tasks:
+     - name: check sha1summ
+       stat: path=/var/lib/puppet/ssl/certs/ca.pem checksum_algorithm=sha1
+       register: p
+
+     - name: Stop puppet agent
+       service: name=puppet state=stopped
+       register: result
+       when: "p.stat['checksum'] != '41481add1b6d5c26fe1ac57e515ea383c4fa6365'"
+
+     - name: dir backup
+       command: mv /var/lib/puppet/ssl /var/lib/puppet/ssl.backup
+       when: result is changed
+       notify:
+        - start puppet
+
+  handlers:
+     - name: start puppet
+       service: name=puppet state=started
